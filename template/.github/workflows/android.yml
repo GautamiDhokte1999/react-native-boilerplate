@@ -1,0 +1,41 @@
+name: Create Android Build
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  Build:
+    name: Create Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch code
+        uses: actions/checkout@v2
+
+      - name: Installing node
+        uses: actions/setup-node@v2
+
+      - name: Install dependencies
+        run: |
+          yarn install
+
+      - name: Building bundle
+        run: |
+          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/
+
+      - name: Make Gradlew Executable
+        run: cd android && chmod +x ./gradlew
+
+      - name: Clean Gradle for Build
+        run: |
+          cd android && ./gradlew clean
+
+      - name: Create build
+        run: |
+          cd android && ./gradlew assembleRelease -x bundleReleaseJsAndAssets
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/
